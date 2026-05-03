@@ -48,29 +48,6 @@ local function chat_remove_tail(n)
   vim.bo[buf].modifiable = false
 end
 
-local function wrap(text, width)
-  local out = {}
-  for _, para in ipairs(vim.split(text, '\n', { plain = true })) do
-    if para == '' then
-      table.insert(out, '')
-    else
-      local line = ''
-      for _, word in ipairs(vim.split(para, ' ', { plain = true })) do
-        if line == '' then
-          line = word
-        elseif #line + 1 + #word > width then
-          table.insert(out, line)
-          line = word
-        else
-          line = line .. ' ' .. word
-        end
-      end
-      if line ~= '' then table.insert(out, line) end
-    end
-  end
-  return out
-end
-
 local function close()
   for _, w in ipairs({ state.chat_win, state.inp_win }) do
     if w and vim.api.nvim_win_is_valid(w) then
@@ -136,13 +113,13 @@ local function send(ex, lang, filepath)
     vim.api.nvim_set_current_win(state.inp_win)
   end
 
-  local user_out = { '', 'You:' }
-  for _, l in ipairs(wrap(msg, 60)) do
-    table.insert(user_out, '  ' .. l)
+  local user_out = { '', '## You', '' }
+  for _, l in ipairs(vim.split(msg, '\n', { plain = true })) do
+    table.insert(user_out, l)
   end
   chat_append(user_out)
-  chat_append({ '', '… Rosetta: thinking' })
-  local THINKING_LINES = 2
+  chat_append({ '', '## Rosetta', '', '_thinking…_' })
+  local THINKING_LINES = 4
 
   table.insert(state.history, { role = 'user', content = msg })
   state.thinking = true
@@ -152,9 +129,10 @@ local function send(ex, lang, filepath)
     chat_remove_tail(THINKING_LINES)
     chat_append({
       '',
-      'Rosetta: No API key found.',
-      '  Set ANTHROPIC_API_KEY or configure',
-      '  chat = { api_key = "..." } in setup().',
+      '## Rosetta',
+      '',
+      '_No API key found. Set `ANTHROPIC_API_KEY` or_',
+      '_configure `chat = { api_key = "..." }` in setup()._',
       '',
     })
     state.thinking = false
@@ -199,16 +177,16 @@ local function send(ex, lang, filepath)
           return
         end
         if resp.error then
-          chat_append({ '', 'Rosetta: API error — ' .. (resp.error.message or 'unknown'), '' })
+          chat_append({ '', '## Rosetta', '', '_API error — ' .. (resp.error.message or 'unknown') .. '_', '' })
           return
         end
 
         local text = resp.content and resp.content[1] and resp.content[1].text or ''
         table.insert(state.history, { role = 'assistant', content = text })
 
-        local reply = { '', 'Rosetta:' }
-        for _, l in ipairs(wrap(text, 60)) do
-          table.insert(reply, '  ' .. l)
+        local reply = { '', '## Rosetta', '' }
+        for _, l in ipairs(vim.split(text, '\n', { plain = true })) do
+          table.insert(reply, l)
         end
         table.insert(reply, '')
         chat_append(reply)
@@ -239,10 +217,11 @@ function M.open(ex, lang, filepath)
   local inp_row = math.min(row + chat_h + 2, vim.o.lines - inp_h - 3)
 
   state.chat_buf = vim.api.nvim_create_buf(false, true)
+  vim.bo[state.chat_buf].filetype = 'markdown'
   vim.bo[state.chat_buf].modifiable = true
   vim.api.nvim_buf_set_lines(state.chat_buf, 0, -1, false, {
-    '  Ask Rosetta anything about this exercise.',
-    '  <CR> to send  ·  q / <Esc> to close',
+    '_Ask Rosetta anything about this exercise._',
+    '_`<CR>` send · `q` / `<Esc>` close_',
     '',
   })
   vim.bo[state.chat_buf].modifiable = false
@@ -259,10 +238,11 @@ function M.open(ex, lang, filepath)
     title_pos = 'center',
     zindex    = 60,
   })
-  vim.wo[state.chat_win].wrap       = true
-  vim.wo[state.chat_win].winhl      = 'Normal:RosettaFloat,FloatBorder:RosettaBorder,FloatTitle:RosettaTitle'
-  vim.wo[state.chat_win].foldenable = false
-  vim.wo[state.chat_win].cursorline = false
+  vim.wo[state.chat_win].wrap         = true
+  vim.wo[state.chat_win].winhl        = 'Normal:RosettaFloat,FloatBorder:RosettaBorder,FloatTitle:RosettaTitle'
+  vim.wo[state.chat_win].foldenable   = false
+  vim.wo[state.chat_win].cursorline   = false
+  vim.wo[state.chat_win].conceallevel = 2
 
   state.inp_buf = vim.api.nvim_create_buf(false, true)
   vim.bo[state.inp_buf].buftype = 'nofile'
