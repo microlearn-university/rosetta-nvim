@@ -20,7 +20,7 @@ The same algorithm can be worked through in every language — re-implementing b
 
 ```lua
 {
-  dir = "~/me/rosetta-nvim",
+  "microlearn-university/rosetta-nvim",
   config = function()
     require('rosetta').setup()
   end,
