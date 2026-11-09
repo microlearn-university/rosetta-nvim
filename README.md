@@ -57,8 +57,14 @@ Saving (`:w`) re-runs the check automatically.
 - 02 Two Sum
 - 03 Maximum Subarray (Kadane's)
 - 04 Roman to Integer
-
-(More to come — DP, graph traversals, sorting, union-find, etc.)
+- 05 Merge Sort
+- 06 Merge Intervals
+- 07 Number of Islands
+- 08 Course Schedule
+- 09 Search in Rotated Sorted Array
+- 10 Coin Change
+- 11 Network Delay Time (Dijkstra)
+- 12 Redundant Connection (union-find)
 
 ## License
 
